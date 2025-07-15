@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'system-ui', 'sans-serif'],
+				heading: ['Roboto Slab', 'serif'],
+				industrial: ['Inter', 'system-ui', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -26,7 +31,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -63,6 +69,19 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
+			backgroundImage: {
+				'gradient-industrial': 'var(--gradient-industrial)',
+				'gradient-steel': 'var(--gradient-steel)',
+				'gradient-hero': 'var(--gradient-hero)',
+			},
+			boxShadow: {
+				'equipment': 'var(--shadow-equipment)',
+				'industrial': 'var(--shadow-industrial)',
+				'glow': 'var(--shadow-glow)',
+			},
+			transitionTimingFunction: {
+				'industrial': 'var(--transition-industrial)',
+			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
@@ -84,11 +103,42 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'equipment-pulse': {
+					'0%, 100%': {
+						opacity: '1',
+						transform: 'scale(1)'
+					},
+					'50%': {
+						opacity: '0.8',
+						transform: 'scale(1.02)'
+					}
+				},
+				'slide-in-industrial': {
+					'0%': {
+						transform: 'translateY(20px)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'translateY(0)',
+						opacity: '1'
+					}
+				},
+				'glow-pulse': {
+					'0%, 100%': {
+						boxShadow: '0 0 20px hsl(var(--primary) / 0.3)'
+					},
+					'50%': {
+						boxShadow: '0 0 40px hsl(var(--primary) / 0.6)'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'equipment-pulse': 'equipment-pulse 3s ease-in-out infinite',
+				'slide-in-industrial': 'slide-in-industrial 0.6s ease-out',
+				'glow-pulse': 'glow-pulse 2s ease-in-out infinite'
 			}
 		}
 	},
