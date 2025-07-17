@@ -102,7 +102,7 @@ export const HeroSection = () => {
                       <Truck className="h-6 w-6 text-primary" />
                       <div>
                         <div className="font-semibold">Excavator CAT 320</div>
-                        <div className="text-sm text-muted-foreground">Available nearby • $180/hour</div>
+                        <div className="text-sm text-muted-foreground">Available nearby • ₹2,500/hour</div>
                       </div>
                     </div>
                   </div>
@@ -112,7 +112,7 @@ export const HeroSection = () => {
                       <Wrench className="h-6 w-6 text-secondary" />
                       <div>
                         <div className="font-semibold">Mobile Crane 50T</div>
-                        <div className="text-sm text-muted-foreground">2.3 km away • $350/hour</div>
+                        <div className="text-sm text-muted-foreground">2.3 km away • ₹4,500/hour</div>
                       </div>
                     </div>
                   </div>
