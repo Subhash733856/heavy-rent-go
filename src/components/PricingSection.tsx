@@ -67,7 +67,7 @@ const features = [
 
 export const PricingSection = () => {
   return (
-    <section className="py-20 bg-gradient-steel">
+    <section id="pricing-section" className="py-20 bg-gradient-steel">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-16">
@@ -185,7 +185,16 @@ export const PricingSection = () => {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20">
+              <Button 
+                variant="outline" 
+                className="w-full bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20"
+                onClick={() => {
+                  const specialOffersSection = document.getElementById('special-offers-section');
+                  if (specialOffersSection) {
+                    specialOffersSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 View All Offers
               </Button>
             </CardContent>
@@ -203,10 +212,24 @@ export const PricingSection = () => {
               with volume discounts and project management support.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" size="lg" className="bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20"
+                onClick={() => window.open('tel:+918000000000', '_self')}
+              >
                 📞 Call for Quote
               </Button>
-              <Button variant="secondary" size="lg">
+              <Button 
+                variant="secondary" 
+                size="lg"
+                onClick={() => {
+                  const customQuoteSection = document.getElementById('custom-quote-section');
+                  if (customQuoteSection) {
+                    customQuoteSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
                 Get Custom Pricing
               </Button>
             </div>

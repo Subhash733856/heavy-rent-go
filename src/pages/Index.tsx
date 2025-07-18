@@ -3,8 +3,12 @@ import { HeroSection } from "@/components/HeroSection";
 import { EquipmentCategories } from "@/components/EquipmentCategories";
 import { EquipmentListing } from "@/components/EquipmentListing";
 import { PricingSection } from "@/components/PricingSection";
+import PaymentSection from "@/components/PaymentSection";
+import SpecialOffersSection from "@/components/SpecialOffersSection";
+import CustomQuoteSection from "@/components/CustomQuoteSection";
 import { HowItWorks } from "@/components/HowItWorks";
 import { OperatorSection } from "@/components/OperatorSection";
+import OperatorRevenueSection from "@/components/OperatorRevenueSection";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -17,8 +21,16 @@ const Index = () => {
         <EquipmentListing />
       </div>
       <PricingSection />
+      <PaymentSection />
+      <div id="special-offers-section">
+        <SpecialOffersSection />
+      </div>
+      <div id="custom-quote-section">
+        <CustomQuoteSection />
+      </div>
       <HowItWorks />
       <OperatorSection />
+      <OperatorRevenueSection />
       <Footer />
     </div>
   );
