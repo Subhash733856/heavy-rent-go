@@ -60,11 +60,24 @@ export const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="equipment" size="xl" className="group">
+              <Button 
+                variant="equipment" 
+                size="xl" 
+                className="group"
+                onClick={() => {
+                  const element = document.getElementById('equipment-listing');
+                  if (element) element.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 Book Equipment Now
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button variant="outline" size="xl" className="bg-background/10 border-accent-foreground/30 text-accent-foreground hover:bg-background/20">
+              <Button 
+                variant="outline" 
+                size="xl" 
+                className="bg-background/10 border-accent-foreground/30 text-accent-foreground hover:bg-background/20"
+                onClick={() => alert('Partner registration coming soon! Call +91-8000000000 to list your equipment.')}
+              >
                 List Your Equipment
               </Button>
             </div>
@@ -128,7 +141,15 @@ export const HeroSection = () => {
                   </div>
                 </div>
 
-                <Button variant="equipment" className="w-full" size="lg">
+                <Button 
+                  variant="equipment" 
+                  className="w-full" 
+                  size="lg"
+                  onClick={() => {
+                    const element = document.getElementById('equipment-listing');
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
                   View All Equipment
                 </Button>
               </div>

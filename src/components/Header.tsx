@@ -3,6 +3,24 @@ import { Badge } from "@/components/ui/badge";
 import { Construction, Menu, User, Bell, Search } from "lucide-react";
 import { useState } from "react";
 
+const scrollToSection = (id: string) => {
+  const element = document.getElementById(id);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
+const handleCallEmergency = () => {
+  window.open('tel:+918000000000', '_self');
+};
+
+const handleSearch = () => {
+  const equipmentSection = document.getElementById('equipment-listing');
+  if (equipmentSection) {
+    equipmentSection.scrollIntoView({ behavior: 'smooth' });
+  }
+};
+
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -27,35 +45,65 @@ export const Header = () => {
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#equipment" className="text-foreground hover:text-primary font-medium transition-colors">
+            <button 
+              onClick={() => scrollToSection('equipment')} 
+              className="text-foreground hover:text-primary font-medium transition-colors"
+            >
               Equipment
-            </a>
-            <a href="#how-it-works" className="text-foreground hover:text-primary font-medium transition-colors">
+            </button>
+            <button 
+              onClick={() => scrollToSection('how-it-works')} 
+              className="text-foreground hover:text-primary font-medium transition-colors"
+            >
               How It Works
-            </a>
-            <a href="#for-operators" className="text-foreground hover:text-primary font-medium transition-colors">
+            </button>
+            <button 
+              onClick={() => scrollToSection('for-operators')} 
+              className="text-foreground hover:text-primary font-medium transition-colors"
+            >
               For Operators
-            </a>
-            <a href="#support" className="text-foreground hover:text-primary font-medium transition-colors">
-              Support
-            </a>
+            </button>
+            <button 
+              onClick={handleCallEmergency} 
+              className="text-foreground hover:text-primary font-medium transition-colors"
+            >
+              Emergency Support
+            </button>
           </nav>
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden md:flex"
+              onClick={handleSearch}
+            >
               <Search className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="hidden md:flex">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="hidden md:flex"
+              onClick={handleCallEmergency}
+            >
               <Bell className="h-5 w-5" />
             </Button>
             
             <div className="hidden md:flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => alert('Sign In functionality would be implemented with Supabase auth')}
+              >
                 <User className="h-4 w-4 mr-2" />
                 Sign In
               </Button>
-              <Button variant="equipment" size="sm">
+              <Button 
+                variant="equipment" 
+                size="sm"
+                onClick={() => scrollToSection('equipment-listing')}
+              >
                 Get Started
               </Button>
             </div>
@@ -76,23 +124,45 @@ export const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pt-4 border-t border-border">
             <nav className="flex flex-col gap-4">
-              <a href="#equipment" className="text-foreground hover:text-primary font-medium">
+              <button 
+                onClick={() => { scrollToSection('equipment'); setIsMenuOpen(false); }} 
+                className="text-foreground hover:text-primary font-medium text-left"
+              >
                 Equipment
-              </a>
-              <a href="#how-it-works" className="text-foreground hover:text-primary font-medium">
+              </button>
+              <button 
+                onClick={() => { scrollToSection('how-it-works'); setIsMenuOpen(false); }} 
+                className="text-foreground hover:text-primary font-medium text-left"
+              >
                 How It Works
-              </a>
-              <a href="#for-operators" className="text-foreground hover:text-primary font-medium">
+              </button>
+              <button 
+                onClick={() => { scrollToSection('for-operators'); setIsMenuOpen(false); }} 
+                className="text-foreground hover:text-primary font-medium text-left"
+              >
                 For Operators
-              </a>
-              <a href="#support" className="text-foreground hover:text-primary font-medium">
-                Support
-              </a>
+              </button>
+              <button 
+                onClick={() => { handleCallEmergency(); setIsMenuOpen(false); }} 
+                className="text-foreground hover:text-primary font-medium text-left"
+              >
+                Emergency Support
+              </button>
               <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => alert('Sign In functionality would be implemented with Supabase auth')}
+                >
                   Sign In
                 </Button>
-                <Button variant="equipment" size="sm" className="flex-1">
+                <Button 
+                  variant="equipment" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => { scrollToSection('equipment-listing'); setIsMenuOpen(false); }}
+                >
                   Get Started
                 </Button>
               </div>

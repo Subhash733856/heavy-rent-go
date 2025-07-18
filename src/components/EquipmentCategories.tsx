@@ -112,6 +112,10 @@ export const EquipmentCategories = () => {
             <Card 
               key={category.id} 
               className="group p-6 hover:shadow-equipment transition-all duration-300 cursor-pointer border-2 hover:border-primary/30 hover:scale-105"
+              onClick={() => {
+                const element = document.getElementById('equipment-listing');
+                if (element) element.scrollIntoView({ behavior: 'smooth' });
+              }}
             >
               <div className="space-y-4">
                 {/* Header */}
@@ -186,10 +190,23 @@ export const EquipmentCategories = () => {
               Professional operators included.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" size="lg" className="bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20"
+                onClick={() => window.open('tel:+918000000000', '_self')}
+              >
                 Call Emergency Dispatch
               </Button>
-              <Button variant="secondary" size="lg" className="group">
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                className="group"
+                onClick={() => {
+                  const element = document.getElementById('equipment-listing');
+                  if (element) element.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
                 Browse All Equipment
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
