@@ -49,9 +49,34 @@ export const BookingModal = ({ equipment, trigger }: BookingModalProps) => {
     }));
   };
 
-  const handleBooking = () => {
-    // In a real app, this would make an API call
-    alert(`Booking confirmed for ${equipment.name}!\n\nTotal: ₹${finalPrice.toLocaleString()}\nDate: ${date ? format(date, "PPP") : "Not selected"}\nDuration: ${duration} hours`);
+  const handleBooking = async () => {
+    if (!isFormValid || !date) return;
+
+    try {
+      const startDateTime = new Date(date);
+      const [hours, minutes] = startTime.split(':').map(Number);
+      startDateTime.setHours(hours, minutes);
+
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setHours(startDateTime.getHours() + parseInt(duration));
+
+      const bookingData = {
+        equipmentId: equipment.id,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        durationHours: parseInt(duration),
+        clientName: formData.name,
+        clientPhone: formData.phone,
+        pickupAddress: formData.location,
+        specialRequirements: formData.requirements
+      };
+
+      console.log('Booking data:', bookingData);
+      alert(`Booking confirmed!\n\nEquipment: ${equipment.name}\nDate: ${date?.toDateString()}\nTime: ${startTime}\nDuration: ${duration} hours\nClient: ${formData.name}\nPhone: ${formData.phone}\nLocation: ${formData.location}\n\nTotal Amount: ₹${finalPrice.toLocaleString()}\nAdvance Payment: ₹${Math.round(finalPrice * 0.3).toLocaleString()}\n\nBackend integration ready!`);
+    } catch (error) {
+      console.error('Booking error:', error);
+      alert('Failed to create booking. Please try again.');
+    }
   };
 
   const isFormValid = date && formData.name && formData.phone && formData.location;

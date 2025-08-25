@@ -35,35 +35,48 @@ const PaymentSection = () => {
       return;
     }
 
-    const options = {
-      key: "rzp_test_Ff7Gh4K3JBYwOK",
-      amount: amount * 100, // Amount in paise
-      currency: "INR",
-      name: "HeavyRent",
-      description: description,
-      image: "/favicon.ico",
-      handler: function (response: any) {
-        toast({
-          title: "Payment Successful!",
-          description: `Payment ID: ${response.razorpay_payment_id}`,
-        });
-        console.log("Payment successful:", response);
-      },
-      prefill: {
-        name: "Customer Name",
-        email: "customer@example.com",
-        contact: "+919999999999"
-      },
-      notes: {
-        address: "Equipment Booking"
-      },
-      theme: {
-        color: "#F97316"
-      }
-    };
+    try {
+      // This will integrate with Supabase backend when connected
+      const options = {
+        key: "rzp_test_Ff7Gh4K3JBYwOK",
+        amount: amount * 100, // Amount in paise
+        currency: "INR",
+        name: "HeavyRent",
+        description: description,
+        image: "/favicon.ico",
+        handler: function (response: any) {
+          toast({
+            title: "Payment Successful!",
+            description: `Payment ID: ${response.razorpay_payment_id}`,
+          });
+          console.log("Payment successful:", response);
+          
+          // Here we would verify payment with backend
+          console.log("Connect to Supabase to enable payment verification");
+        },
+        prefill: {
+          name: "Customer Name",
+          email: "customer@example.com",
+          contact: "+919999999999"
+        },
+        notes: {
+          address: "Equipment Booking"
+        },
+        theme: {
+          color: "#F97316"
+        }
+      };
 
-    const paymentObject = new window.Razorpay(options);
-    paymentObject.open();
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    } catch (error) {
+      console.error('Payment setup error:', error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to setup payment. Connect to Supabase for full functionality.",
+        variant: "destructive",
+      });
+    }
   };
 
   const paymentPlans = [

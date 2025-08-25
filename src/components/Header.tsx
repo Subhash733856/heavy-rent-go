@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Construction, Menu, User, Bell, Search } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "./AuthModal";
 
 const scrollToSection = (id: string) => {
   const element = document.getElementById(id);
@@ -23,6 +25,7 @@ const handleSearch = () => {
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, profile } = useAuth();
 
   return (
     <header className="bg-background/95 backdrop-blur-sm border-b-2 border-primary/20 sticky top-0 z-50 shadow-industrial">
@@ -91,14 +94,14 @@ export const Header = () => {
             </Button>
             
             <div className="hidden md:flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => alert('Sign In functionality would be implemented with Supabase auth')}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Sign In
-              </Button>
+              <AuthModal
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <User className="h-4 w-4 mr-2" />
+                    {user ? profile?.name || 'Account' : 'Sign In'}
+                  </Button>
+                }
+              />
               <Button 
                 variant="equipment" 
                 size="sm"
