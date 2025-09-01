@@ -152,14 +152,13 @@ export const Header = () => {
                 Emergency Support
               </button>
               <div className="flex gap-2 pt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => alert('Sign In functionality would be implemented with Supabase auth')}
-                >
-                  Sign In
-                </Button>
+                <AuthModal
+                  trigger={
+                    <Button variant="outline" size="sm" className="flex-1">
+                      {user ? profile?.name || 'Account' : 'Sign In'}
+                    </Button>
+                  }
+                />
                 <Button 
                   variant="equipment" 
                   size="sm" 
