@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { GetStartedButton } from "@/components/GetStartedButton";
 import { 
   MapPin, 
   Clock, 
@@ -60,18 +61,7 @@ export const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                variant="equipment" 
-                size="xl" 
-                className="group"
-                onClick={() => {
-                  const element = document.getElementById('equipment-listing');
-                  if (element) element.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Book Equipment Now
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <GetStartedButton />
               <Button 
                 variant="outline" 
                 size="xl" 
