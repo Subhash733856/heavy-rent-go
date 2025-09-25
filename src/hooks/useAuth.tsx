@@ -1,6 +1,15 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import { supabase, authAPI, Profile } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
+
+interface Profile {
+  id: string
+  user_id: string
+  name: string
+  role: 'client' | 'operator'
+  created_at: string
+  updated_at: string
+}
 
 interface AuthContextType {
   user: User | null
@@ -49,7 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = async (userId: string) => {
     try {
-      const profileData = await authAPI.getUserProfile(userId)
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single()
+      
+      if (error) throw error
       setProfile(profileData)
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -61,8 +76,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, name: string, role: 'client' | 'operator' = 'client') => {
     setLoading(true)
     try {
-      const result = await authAPI.signUp(email, password, name, role)
-      return result
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+            role,
+          }
+        }
+      })
+      
+      if (error) throw error
+      
+      // Create profile record
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: data.user.id,
+            name,
+            role
+          })
+        
+        if (profileError) throw profileError
+      }
+      
+      return { data, error }
     } finally {
       setLoading(false)
     }
@@ -71,8 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     setLoading(true)
     try {
-      const result = await authAPI.signIn(email, password)
-      return result
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+      return { data, error }
     } finally {
       setLoading(false)
     }
@@ -81,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     setLoading(true)
     try {
-      await authAPI.signOut()
+      await supabase.auth.signOut()
     } finally {
       setLoading(false)
     }
