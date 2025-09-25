@@ -6,7 +6,11 @@ interface Profile {
   id: string
   user_id: string
   name: string
+  email?: string
   role: 'client' | 'operator'
+  rating?: number
+  total_reviews?: number
+  bio?: string
   created_at: string
   updated_at: string
 }
@@ -62,10 +66,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
       
       if (error) throw error
-      setProfile(profileData)
+      
+      if (profileData) {
+        // Type cast the role to ensure it matches our interface
+        const typedProfile: Profile = {
+          ...profileData,
+          role: profileData.role as 'client' | 'operator'
+        }
+        setProfile(typedProfile)
+      }
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
@@ -88,20 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       
       if (error) throw error
-      
-      // Create profile record
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            name,
-            role
-          })
-        
-        if (profileError) throw profileError
-      }
-      
       return { data, error }
     } finally {
       setLoading(false)
