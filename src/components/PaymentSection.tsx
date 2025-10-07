@@ -37,8 +37,9 @@ const PaymentSection = () => {
 
     try {
       // This will integrate with Supabase backend when connected
+      const { getRazorpayKey } = await import('@/config/razorpay');
       const options = {
-        key: "rzp_test_Ff7Gh4K3JBYwOK",
+        key: getRazorpayKey(),
         amount: amount * 100, // Amount in paise
         currency: "INR",
         name: "HeavyRent",
