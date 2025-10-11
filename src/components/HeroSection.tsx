@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { GetStartedButton } from "@/components/GetStartedButton";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   MapPin, 
   Clock, 
@@ -14,6 +15,30 @@ import {
 } from "lucide-react";
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+  const { user, profile } = useAuth();
+
+  const handleGetStarted = () => {
+    if (!user) {
+      navigate('/client-login');
+    } else if (profile?.role === 'operator') {
+      navigate('/operator-home');
+    } else {
+      navigate('/user-dashboard');
+    }
+  };
+
+  const handleListEquipment = () => {
+    if (!user) {
+      navigate('/operator-login');
+    } else if (profile?.role === 'operator') {
+      navigate('/operator-home');
+    } else {
+      alert('Please sign up as an operator to list equipment.');
+      navigate('/operator-login');
+    }
+  };
+
   return (
     <section className="relative bg-gradient-hero text-accent-foreground py-20 overflow-hidden">
       {/* Background Pattern */}
@@ -61,12 +86,19 @@ export const HeroSection = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <GetStartedButton />
+              <Button 
+                size="xl" 
+                className="bg-gradient-industrial text-primary-foreground hover:opacity-90 transition-all duration-300 shadow-glow"
+                onClick={handleGetStarted}
+              >
+                Get Started
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Button 
                 variant="outline" 
                 size="xl" 
                 className="bg-background/10 border-accent-foreground/30 text-accent-foreground hover:bg-background/20"
-                onClick={() => alert('Partner registration coming soon! Call +91-8000000000 to list your equipment.')}
+                onClick={handleListEquipment}
               >
                 List Your Equipment
               </Button>

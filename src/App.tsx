@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import OperatorDashboard from "./pages/OperatorDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import ClientLogin from "./pages/ClientLogin";
+import OperatorLogin from "./pages/OperatorLogin";
+import OperatorHome from "./pages/OperatorHome";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +23,9 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/client-login" element={<ClientLogin />} />
+            <Route path="/operator-login" element={<OperatorLogin />} />
+            <Route path="/operator-home" element={<OperatorHome />} />
             <Route path="/operator-dashboard" element={<OperatorDashboard />} />
             <Route path="/user-dashboard" element={<UserDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

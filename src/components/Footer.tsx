@@ -38,8 +38,8 @@ export const Footer = () => {
           <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <div className="space-y-2 text-sm opacity-80">
-              <div>1-800-HEAVY-RENT</div>
-              <div>support@heavyrent.com</div>
+              <div>+91 7259388545</div>
+              <div>HeavyRentProfessionalEquipment@gmail.com</div>
               <div>24/7 Emergency Dispatch</div>
             </div>
           </div>

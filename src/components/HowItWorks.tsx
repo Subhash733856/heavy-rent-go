@@ -164,43 +164,6 @@ export const HowItWorks = () => {
             ))}
           </div>
         </div>
-
-        {/* CTA Section */}
-        <div className="text-center">
-          <Card className="max-w-4xl mx-auto p-8 bg-accent text-accent-foreground shadow-2xl">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div className="text-left">
-                <h3 className="text-2xl font-heading font-bold mb-4">
-                  Ready to Get Started?
-                </h3>
-                <p className="mb-6 opacity-90">
-                  Join thousands of contractors who trust HeavyRent for their equipment needs. 
-                  Professional, reliable, available 24/7.
-                </p>
-                <div className="flex items-center gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    <span>No setup fees</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    <span>Instant booking</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <Button variant="equipment" size="xl" className="w-full group">
-                  Start Booking Equipment
-                  <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                </Button>
-                <Button variant="outline" size="lg" className="w-full bg-background/10 border-accent-foreground/30 text-accent-foreground hover:bg-background/20">
-                  Talk to Our Team
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
       </div>
     </section>
   );

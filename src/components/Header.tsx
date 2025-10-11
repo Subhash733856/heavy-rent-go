@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Construction, Menu, User, Bell, Search } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import AuthModal from "./AuthModal";
+import { useNavigate } from "react-router-dom";
 
 const scrollToSection = (id: string) => {
   const element = document.getElementById(id);
@@ -13,7 +13,7 @@ const scrollToSection = (id: string) => {
 };
 
 const handleCallEmergency = () => {
-  window.open('tel:+918000000000', '_self');
+  window.open('tel:+917259388545', '_self');
 };
 
 const handleSearch = () => {
@@ -25,14 +25,30 @@ const handleSearch = () => {
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, profile } = useAuth();
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLoginClick = () => {
+    navigate("/client-login");
+  };
+
+  const handleDashboardClick = () => {
+    if (profile?.role === 'operator') {
+      navigate("/operator-home");
+    } else {
+      navigate("/user-dashboard");
+    }
+  };
 
   return (
     <header className="bg-background/95 backdrop-blur-sm border-b-2 border-primary/20 sticky top-0 z-50 shadow-industrial">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
             <div className="bg-gradient-industrial p-2 rounded-lg shadow-equipment">
               <Construction className="h-8 w-8 text-primary-foreground" />
             </div>
@@ -94,14 +110,14 @@ export const Header = () => {
             </Button>
             
             <div className="hidden md:flex items-center gap-2">
-              <AuthModal
-                trigger={
-                  <Button variant="outline" size="sm">
-                    <User className="h-4 w-4 mr-2" />
-                    {user ? profile?.name || 'Account' : 'Sign In'}
-                  </Button>
-                }
-              />
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={user ? handleDashboardClick : handleLoginClick}
+              >
+                <User className="h-4 w-4 mr-2" />
+                {user ? profile?.name || 'Dashboard' : 'Sign In'}
+              </Button>
               <Button 
                 variant="equipment" 
                 size="sm"
@@ -152,13 +168,21 @@ export const Header = () => {
                 Emergency Support
               </button>
               <div className="flex gap-2 pt-2">
-                <AuthModal
-                  trigger={
-                    <Button variant="outline" size="sm" className="flex-1">
-                      {user ? profile?.name || 'Account' : 'Sign In'}
-                    </Button>
-                  }
-                />
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => { 
+                    if (user) {
+                      handleDashboardClick();
+                    } else {
+                      handleLoginClick();
+                    }
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  {user ? profile?.name || 'Dashboard' : 'Sign In'}
+                </Button>
                 <Button 
                   variant="equipment" 
                   size="sm" 

@@ -216,7 +216,7 @@ export const PricingSection = () => {
                 variant="outline" 
                 size="lg" 
                 className="bg-background/10 border-accent-foreground/30 text-primary-foreground hover:bg-background/20"
-                onClick={() => window.open('tel:+918000000000', '_self')}
+                onClick={() => window.open('tel:+917259388545', '_self')}
               >
                 📞 Call for Quote
               </Button>

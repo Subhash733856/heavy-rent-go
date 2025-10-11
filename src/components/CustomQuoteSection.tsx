@@ -19,7 +19,7 @@ const CustomQuoteSection = () => {
   };
 
   const handleTalkToTeam = () => {
-    window.open('tel:+918000000000', '_self');
+    window.open('tel:+917259388545', '_self');
     toast({
       title: "Calling Our Team",
       description: "You're being connected to our equipment specialists.",
@@ -155,8 +155,8 @@ const CustomQuoteSection = () => {
               {/* Contact Info */}
               <div className="bg-white/10 rounded-lg p-4 text-center">
                 <p className="text-sm opacity-90 mb-2">📞 24/7 Support Available</p>
-                <p className="font-semibold">+91-8000-000-000</p>
-                <p className="text-sm opacity-75">support@heavyrent.com</p>
+                <p className="font-semibold">+91 7259388545</p>
+                <p className="text-sm opacity-75">HeavyRentProfessionalEquipment@gmail.com</p>
               </div>
             </CardContent>
           </Card>

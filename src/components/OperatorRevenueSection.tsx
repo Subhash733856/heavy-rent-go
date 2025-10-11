@@ -21,8 +21,7 @@ const OperatorRevenueSection = () => {
       title: "Demo Scheduled",
       description: "We'll call you within 15 minutes to schedule a personalized demo.",
     });
-    // In a real app, this would open a calendar booking widget
-    window.open('tel:+918000000000', '_self');
+    window.open('tel:+917259388545', '_self');
   };
 
   const benefits = [
