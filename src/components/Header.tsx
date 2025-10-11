@@ -1,9 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Construction, Menu, User, Bell, Search } from "lucide-react";
+import { Construction, Menu, User, Bell, Search, LogOut, LayoutDashboard } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const scrollToSection = (id: string) => {
   const element = document.getElementById(id);
@@ -38,6 +46,11 @@ export const Header = () => {
     } else {
       navigate("/user-dashboard");
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
   };
 
   return (
@@ -110,21 +123,65 @@ export const Header = () => {
             </Button>
             
             <div className="hidden md:flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={user ? handleDashboardClick : handleLoginClick}
-              >
-                <User className="h-4 w-4 mr-2" />
-                {user ? profile?.name || 'Dashboard' : 'Sign In'}
-              </Button>
-              <Button 
-                variant="equipment" 
-                size="sm"
-                onClick={() => scrollToSection('equipment-listing')}
-              >
-                Get Started
-              </Button>
+              {user ? (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <User className="h-4 w-4 mr-2" />
+                        {profile?.name || 'User'}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                        <div className="font-medium text-foreground">{profile?.name}</div>
+                        <div className="text-xs">{profile?.email}</div>
+                        <div className="text-xs mt-1">
+                          <Badge variant="secondary" className="text-xs">
+                            {profile?.role === 'operator' ? 'Operator' : 'Client'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleDashboardClick}>
+                        <LayoutDashboard className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button 
+                    variant="equipment" 
+                    size="sm"
+                    onClick={() => scrollToSection('equipment-listing')}
+                  >
+                    Get Started
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleLoginClick}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                  <Button 
+                    variant="equipment" 
+                    size="sm"
+                    onClick={() => scrollToSection('equipment-listing')}
+                  >
+                    Get Started
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}
@@ -167,26 +224,55 @@ export const Header = () => {
               >
                 Emergency Support
               </button>
-              <div className="flex gap-2 pt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => { 
-                    if (user) {
-                      handleDashboardClick();
-                    } else {
+              <div className="flex flex-col gap-2 pt-2">
+                {user ? (
+                  <>
+                    <div className="p-3 bg-muted rounded-lg mb-2">
+                      <div className="font-medium text-sm">{profile?.name}</div>
+                      <div className="text-xs text-muted-foreground">{profile?.email}</div>
+                      <Badge variant="secondary" className="text-xs mt-2">
+                        {profile?.role === 'operator' ? 'Operator' : 'Client'}
+                      </Badge>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => { 
+                        handleDashboardClick();
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => { 
+                        handleLogout();
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => { 
                       handleLoginClick();
-                    }
-                    setIsMenuOpen(false);
-                  }}
-                >
-                  {user ? profile?.name || 'Dashboard' : 'Sign In'}
-                </Button>
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                )}
                 <Button 
                   variant="equipment" 
-                  size="sm" 
-                  className="flex-1"
+                  size="sm"
                   onClick={() => { scrollToSection('equipment-listing'); setIsMenuOpen(false); }}
                 >
                   Get Started
