@@ -244,6 +244,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number
@@ -427,6 +460,14 @@ export type Database = {
         | "completed"
         | "cancelled"
       equipment_status: "available" | "rented" | "maintenance" | "unavailable"
+      notification_type:
+        | "booking_request"
+        | "booking_confirmed"
+        | "payment_success"
+        | "booking_cancelled"
+        | "booking_completed"
+        | "booking_active"
+        | "status_updated"
       payment_status: "pending" | "completed" | "failed" | "refunded"
       quote_status: "new" | "assigned" | "contacted" | "converted" | "closed"
     }
@@ -565,6 +606,15 @@ export const Constants = {
         "cancelled",
       ],
       equipment_status: ["available", "rented", "maintenance", "unavailable"],
+      notification_type: [
+        "booking_request",
+        "booking_confirmed",
+        "payment_success",
+        "booking_cancelled",
+        "booking_completed",
+        "booking_active",
+        "status_updated",
+      ],
       payment_status: ["pending", "completed", "failed", "refunded"],
       quote_status: ["new", "assigned", "contacted", "converted", "closed"],
     },

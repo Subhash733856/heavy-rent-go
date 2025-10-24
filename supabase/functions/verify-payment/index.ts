@@ -1,11 +1,26 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0"
 import { crypto } from "https://deno.land/std@0.190.0/crypto/mod.ts"
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const paymentVerificationSchema = z.object({
+  razorpay_order_id: z.string().min(1, 'Order ID required'),
+  razorpay_payment_id: z.string().min(1, 'Payment ID required'),
+  razorpay_signature: z.string().min(1, 'Signature required'),
+  booking_id: z.string().uuid('Invalid booking ID')
+})
+
+const paymentVerificationSchema = z.object({
+  razorpay_order_id: z.string().min(1, 'Order ID required'),
+  razorpay_payment_id: z.string().min(1, 'Payment ID required'),
+  razorpay_signature: z.string().min(1, 'Signature required'),
+  booking_id: z.string().uuid('Invalid booking ID')
+})
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -26,12 +41,25 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { 
-      razorpay_payment_id, 
-      razorpay_order_id, 
-      razorpay_signature,
-      booking_id 
-    } = await req.json()
+    const rawData = await req.json()
+    
+    // Validate input
+    const validationResult = paymentVerificationSchema.safeParse(rawData)
+    if (!validationResult.success) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Validation failed', 
+          details: validationResult.error.issues 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
+      )
+    }
+    
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, booking_id } = validationResult.data
 
     // Verify payment signature
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')

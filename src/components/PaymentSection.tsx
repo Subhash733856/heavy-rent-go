@@ -36,45 +36,24 @@ const PaymentSection = () => {
     }
 
     try {
-      // This will integrate with Supabase backend when connected
-      const { getRazorpayKey } = await import('@/config/razorpay');
-      const options = {
-        key: getRazorpayKey(),
-        amount: amount * 100, // Amount in paise
-        currency: "INR",
-        name: "HeavyRent",
-        description: description,
-        image: "/favicon.ico",
-        handler: function (response: any) {
-          toast({
-            title: "Payment Successful!",
-            description: `Payment ID: ${response.razorpay_payment_id}`,
-          });
-          console.log("Payment successful:", response);
-          
-          // Here we would verify payment with backend
-          console.log("Connect to Supabase to enable payment verification");
-        },
-        prefill: {
-          name: "Customer Name",
-          email: "customer@example.com",
-          contact: "+919999999999"
-        },
-        notes: {
-          address: "Equipment Booking"
-        },
-        theme: {
-          color: "#F97316"
-        }
-      };
-
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
+      // Get Razorpay key from backend - this is more secure than client-side config
+      // The key will be returned by the payment creation endpoint
+      toast({
+        title: "Payment Setup",
+        description: "Please connect your account and create a booking first to enable payments.",
+      });
+      
+      // In production, this would:
+      // 1. Create a booking
+      // 2. Call create-razorpay-payment endpoint which returns the key
+      // 3. Use that key to initialize Razorpay
+      console.log("Payment flow requires booking creation first");
+      
     } catch (error) {
       console.error('Payment setup error:', error);
       toast({
         title: "Payment Error",
-        description: "Failed to setup payment. Connect to Supabase for full functionality.",
+        description: "Failed to setup payment. Please try again later.",
         variant: "destructive",
       });
     }

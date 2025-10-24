@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookingModal } from "@/components/BookingModal";
+import BookingModal from "@/components/BookingModal";
 import { MapPin, Clock, Star, Fuel, Shield, Users } from "lucide-react";
 
 const equipmentListings = [

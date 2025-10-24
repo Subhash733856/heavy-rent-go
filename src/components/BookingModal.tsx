@@ -1,322 +1,385 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Clock, MapPin, Phone, User, CreditCard, Shield } from "lucide-react";
 import { format } from "date-fns";
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Equipment, bookingAPI } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { z } from "zod";
 
-interface BookingModalProps {
-  equipment: {
-    id: number;
-    name: string;
-    price: string;
-    image: string;
-    category: string;
-    operator: string;
-    location: string;
-  };
-  trigger: React.ReactNode;
+const bookingFormSchema = z.object({
+  name: z.string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters"),
+  phone: z.string()
+    .regex(/^\+91[6-9]\d{9}$/, "Invalid Indian phone number format (+91XXXXXXXXXX)"),
+  location: z.string()
+    .trim()
+    .min(10, "Please provide complete address")
+    .max(500, "Address too long"),
+  requirements: z.string()
+    .max(2000, "Requirements must be less than 2000 characters")
+    .optional()
+});
+
+// Support both old and new props for backward compatibility
+interface BookingModalPropsNew {
+  equipment: Equipment | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger?: never;
 }
 
-export const BookingModal = ({ equipment, trigger }: BookingModalProps) => {
-  const [date, setDate] = useState<Date>();
-  const [duration, setDuration] = useState("4");
-  const [startTime, setStartTime] = useState("09:00");
+interface BookingModalPropsOld {
+  equipment: any; // Old mock equipment type
+  trigger: React.ReactNode;
+  open?: never;
+  onOpenChange?: never;
+}
+
+type BookingModalProps = BookingModalPropsNew | BookingModalPropsOld;
+
+const BookingModal = (props: BookingModalProps) => {
+  const { equipment } = props;
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
   const [formData, setFormData] = useState({
     name: "",
-    phone: "",
+    phone: "+91",
     location: "",
     requirements: ""
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [internalOpen, setInternalOpen] = useState(false);
 
-  const pricePerHour = parseInt(equipment.price.replace(/[₹,]/g, ""));
-  const totalPrice = pricePerHour * parseInt(duration);
-  const gst = Math.round(totalPrice * 0.18);
-  const finalPrice = totalPrice + gst;
+  // Determine if we're using controlled or uncontrolled mode
+  const isControlled = 'open' in props && props.open !== undefined;
+  const open = isControlled ? props.open! : internalOpen;
+  const setOpen = isControlled ? props.onOpenChange! : setInternalOpen;
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  useEffect(() => {
+    if (!open) {
+      setFormData({ name: "", phone: "+91", location: "", requirements: "" });
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setErrors({});
+    }
+  }, [open]);
 
-  const handleBooking = async () => {
-    if (!isFormValid || !date) return;
-
+  const validateForm = () => {
     try {
-      const startDateTime = new Date(date);
-      const [hours, minutes] = startTime.split(':').map(Number);
-      startDateTime.setHours(hours, minutes);
+      bookingFormSchema.parse(formData);
+      setErrors({});
+      
+      if (!startDate || !endDate) {
+        setErrors({ dates: "Please select both start and end dates" });
+        return false;
+      }
+      
+      if (endDate <= startDate) {
+        setErrors({ dates: "End date must be after start date" });
+        return false;
+      }
 
-      const endDateTime = new Date(startDateTime);
-      endDateTime.setHours(startDateTime.getHours() + parseInt(duration));
-
-      const bookingData = {
-        equipmentId: equipment.id,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
-        durationHours: parseInt(duration),
-        clientName: formData.name,
-        clientPhone: formData.phone,
-        pickupAddress: formData.location,
-        specialRequirements: formData.requirements
-      };
-
-      console.log('Booking data:', bookingData);
-      alert(`Booking confirmed!\n\nEquipment: ${equipment.name}\nDate: ${date?.toDateString()}\nTime: ${startTime}\nDuration: ${duration} hours\nClient: ${formData.name}\nPhone: ${formData.phone}\nLocation: ${formData.location}\n\nTotal Amount: ₹${finalPrice.toLocaleString()}\nAdvance Payment: ₹${Math.round(finalPrice * 0.3).toLocaleString()}\n\nBackend integration ready!`);
+      return true;
     } catch (error) {
-      console.error('Booking error:', error);
-      alert('Failed to create booking. Please try again.');
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
     }
   };
 
-  const isFormValid = date && formData.name && formData.phone && formData.location;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors in the form",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Book Equipment</DialogTitle>
-        </DialogHeader>
+    if (!equipment) {
+      toast({
+        title: "Error",
+        description: "Equipment not found",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Equipment Details */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="text-4xl">{equipment.image}</div>
-                  <div>
-                    <CardTitle className="text-xl">{equipment.name}</CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="outline">{equipment.category}</Badge>
-                      <Badge variant="secondary">{equipment.price}/hour</Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <span>{equipment.operator}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{equipment.location}</span>
-                </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-700 font-medium mb-2">
-                    <Shield className="h-4 w-4" />
-                    What's Included
-                  </div>
-                  <ul className="text-sm text-blue-600 space-y-1">
-                    <li>• Certified operator</li>
-                    <li>• Fuel for operation</li>
-                    <li>• Basic insurance coverage</li>
-                    <li>• Equipment delivery & pickup</li>
-                    <li>• 24/7 technical support</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+    // Check if using mock data (old EquipmentListing)
+    const isMockData = typeof equipment.id === 'number';
+    
+    if (isMockData) {
+      // For mock data, just show success message
+      toast({
+        title: "Booking Request Received",
+        description: "This is a demo. In production, connect to the backend to complete bookings.",
+      });
+      setOpen(false);
+      return;
+    }
 
-            {/* Price Breakdown */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Price Breakdown
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span>Equipment Rate ({duration} hours)</span>
-                  <span>₹{totalPrice.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>GST (18%)</span>
-                  <span>₹{gst.toLocaleString()}</span>
-                </div>
-                <div className="border-t pt-2">
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total Amount</span>
-                    <span className="text-primary">₹{finalPrice.toLocaleString()}</span>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  * Minimum booking duration: 4 hours
-                </div>
-              </CardContent>
-            </Card>
+    // Real Supabase booking flow
+    if (!user || !startDate || !endDate) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to create a booking",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const durationHours = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60));
+
+      const result = await bookingAPI.createBooking({
+        equipmentId: equipment.id as string,
+        startTime: startDate.toISOString(),
+        endTime: endDate.toISOString(),
+        durationHours,
+        clientName: formData.name,
+        clientPhone: formData.phone,
+        pickupAddress: (equipment as Equipment).address || '',
+        deliveryAddress: formData.location,
+        specialRequirements: formData.requirements || undefined
+      });
+
+      if (result.success) {
+        toast({
+          title: "Booking Submitted!",
+          description: "Your booking request has been submitted successfully. Our team will contact you shortly.",
+        });
+        setOpen(false);
+      } else {
+        throw new Error(result.error || "Failed to create booking");
+      }
+    } catch (error: any) {
+      console.error("Booking error:", error);
+      
+      let errorMessage = "Failed to submit booking. Please try again.";
+      if (error.message?.includes("Validation failed")) {
+        errorMessage = "Please check your input and try again.";
+      } else if (error.message?.includes("phone number")) {
+        errorMessage = "Please enter a valid Indian phone number (+91XXXXXXXXXX)";
+      }
+      
+      toast({
+        title: "Booking Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const DialogWrapper = 'trigger' in props ? Dialog : 'div';
+  const wrapperProps = 'trigger' in props ? {} : {};
+
+  const content = (
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="text-2xl">Book {equipment?.name}</DialogTitle>
+      </DialogHeader>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter your full name"
+              className={errors.name ? "border-destructive" : ""}
+            />
+            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
           </div>
 
-          {/* Booking Form */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Booking Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Date Selection */}
-                <div className="space-y-2">
-                  <Label>Booking Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Time and Duration */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Start Time</Label>
-                    <Select value={startTime} onValueChange={setStartTime}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="06:00">06:00 AM</SelectItem>
-                        <SelectItem value="07:00">07:00 AM</SelectItem>
-                        <SelectItem value="08:00">08:00 AM</SelectItem>
-                        <SelectItem value="09:00">09:00 AM</SelectItem>
-                        <SelectItem value="10:00">10:00 AM</SelectItem>
-                        <SelectItem value="11:00">11:00 AM</SelectItem>
-                        <SelectItem value="12:00">12:00 PM</SelectItem>
-                        <SelectItem value="13:00">01:00 PM</SelectItem>
-                        <SelectItem value="14:00">02:00 PM</SelectItem>
-                        <SelectItem value="15:00">03:00 PM</SelectItem>
-                        <SelectItem value="16:00">04:00 PM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Duration (hours)</Label>
-                    <Select value={duration} onValueChange={setDuration}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="4">4 hours</SelectItem>
-                        <SelectItem value="6">6 hours</SelectItem>
-                        <SelectItem value="8">8 hours (Full day)</SelectItem>
-                        <SelectItem value="12">12 hours</SelectItem>
-                        <SelectItem value="24">24 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Contact Information */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange("name", e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      placeholder="+91 98765 43210"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange("phone", e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Site Location *</Label>
-                    <Input
-                      id="location"
-                      placeholder="Complete site address"
-                      value={formData.location}
-                      onChange={(e) => handleInputChange("location", e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="requirements">Special Requirements</Label>
-                    <Textarea
-                      id="requirements"
-                      placeholder="Any specific requirements or instructions..."
-                      value={formData.requirements}
-                      onChange={(e) => handleInputChange("requirements", e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment & Booking */}
-            <div className="space-y-4">
-              <Card className="bg-green-50 border-green-200">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 text-green-700 font-medium mb-2">
-                    <Shield className="h-4 w-4" />
-                    Secure Booking Process
-                  </div>
-                  <p className="text-sm text-green-600">
-                    Pay 20% advance now, remaining 80% after service completion. 
-                    Full refund if cancelled 24 hours before booking.
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Button 
-                className="w-full" 
-                size="lg"
-                onClick={handleBooking}
-                disabled={!isFormValid}
-              >
-                Pay Advance ₹{Math.round(finalPrice * 0.2).toLocaleString()} & Confirm Booking
-              </Button>
-              
-              <p className="text-xs text-muted-foreground text-center">
-                By booking, you agree to our terms and conditions. 
-                Equipment will be delivered to your site on the scheduled date.
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number *</Label>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="+919876543210"
+              className={errors.phone ? "border-destructive" : ""}
+            />
+            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
           </div>
         </div>
-      </DialogContent>
+
+        <div className="space-y-2">
+          <Label htmlFor="location">Delivery Address *</Label>
+          <Input
+            id="location"
+            value={formData.location}
+            onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+            placeholder="Enter complete delivery address"
+            className={errors.location ? "border-destructive" : ""}
+          />
+          {errors.location && <p className="text-sm text-destructive">{errors.location}</p>}
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Start Date *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground",
+                    errors.dates && "border-destructive"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? format(startDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={setStartDate}
+                  disabled={(date) => date < new Date()}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label>End Date *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !endDate && "text-muted-foreground",
+                    errors.dates && "border-destructive"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {endDate ? format(endDate, "PPP") : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endDate}
+                  onSelect={setEndDate}
+                  disabled={(date) => !startDate || date <= startDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        {errors.dates && <p className="text-sm text-destructive">{errors.dates}</p>}
+
+        <div className="space-y-2">
+          <Label htmlFor="requirements">Special Requirements (Optional)</Label>
+          <Textarea
+            id="requirements"
+            value={formData.requirements}
+            onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
+            placeholder="Any special requirements or instructions..."
+            rows={3}
+            maxLength={2000}
+            className={errors.requirements ? "border-destructive" : ""}
+          />
+          {errors.requirements && <p className="text-sm text-destructive">{errors.requirements}</p>}
+          <p className="text-xs text-muted-foreground">{formData.requirements.length}/2000 characters</p>
+        </div>
+
+        {equipment && (
+          <div className="bg-muted p-4 rounded-lg space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Equipment:</span>
+              <span className="font-semibold">{equipment.name}</span>
+            </div>
+            {equipment.location && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Location:</span>
+                <span className="font-semibold">{equipment.location}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isSubmitting}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="flex-1"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              "Submit Booking Request"
+            )}
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  );
+
+  if ('trigger' in props) {
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{props.trigger}</DialogTrigger>
+        {content}
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {content}
     </Dialog>
   );
 };
+
+export default BookingModal;
