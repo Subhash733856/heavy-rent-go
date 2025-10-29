@@ -12,53 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { Construction, DollarSign, Calendar, TrendingUp, Plus, Edit, Eye, Trash2 } from "lucide-react";
-
-// Mock data for demonstration
-const mockEquipment = [
-  {
-    id: "1",
-    name: "CAT 320D Excavator",
-    category: "excavators",
-    daily_rate: 1200,
-    location: "Mumbai",
-    status: "available",
-    description: "Heavy-duty excavator perfect for construction sites",
-    total_bookings: 15,
-    revenue: 18000
-  },
-  {
-    id: "2", 
-    name: "JCB 3DX Backhoe",
-    category: "backhoes",
-    daily_rate: 800,
-    location: "Delhi",
-    status: "booked",
-    description: "Versatile backhoe loader for various applications",
-    total_bookings: 12,
-    revenue: 9600
-  }
-];
-
-const mockBookings = [
-  {
-    id: "1",
-    equipment_name: "CAT 320D Excavator",
-    client_name: "ABC Construction",
-    start_date: "2024-01-15",
-    end_date: "2024-01-20",
-    status: "active",
-    total_amount: 6000
-  },
-  {
-    id: "2",
-    equipment_name: "JCB 3DX Backhoe", 
-    client_name: "XYZ Builders",
-    start_date: "2024-01-10",
-    end_date: "2024-01-25",
-    status: "completed",
-    total_amount: 12000
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
 
 const revenueData = [
   { month: 'Jan', revenue: 25000, bookings: 8 },
@@ -78,20 +32,93 @@ const equipmentData = [
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--muted))'];
 
+interface Equipment {
+  id: string;
+  name: string;
+  type: string;
+  category: string;
+  daily_rate: number;
+  location: string;
+  city: string;
+  description: string | null;
+  status: string;
+  specifications: any;
+}
+
+interface Booking {
+  id: string;
+  equipment_id: string;
+  client_name: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  total_amount: number;
+  equipment?: {
+    name: string;
+  };
+}
+
 export default function OperatorDashboard() {
   const { user, profile, isOperator } = useAuth();
-  const [equipment, setEquipment] = useState(mockEquipment);
-  const [bookings, setBookings] = useState(mockBookings);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [showAddEquipment, setShowAddEquipment] = useState(false);
-  const [editingEquipment, setEditingEquipment] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [newEquipment, setNewEquipment] = useState({
     name: "",
+    type: "",
     category: "",
     daily_rate: "",
     location: "",
+    city: "",
     description: "",
-    image_url: ""
+    specifications: {}
   });
+
+  useEffect(() => {
+    if (user && isOperator && profile?.id) {
+      fetchEquipment();
+      fetchBookings();
+    }
+  }, [user, isOperator, profile]);
+
+  const fetchEquipment = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('equipment')
+        .select('*')
+        .eq('owner_id', profile?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setEquipment(data || []);
+    } catch (error: any) {
+      toast.error("Failed to load equipment");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          equipment:equipment_id (
+            name
+          )
+        `)
+        .eq('operator_id', profile?.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBookings(data || []);
+    } catch (error: any) {
+      console.error("Failed to load bookings:", error);
+    }
+  };
 
   if (!user || !isOperator) {
     return (
@@ -108,37 +135,73 @@ export default function OperatorDashboard() {
     );
   }
 
-  const handleAddEquipment = () => {
-    if (!newEquipment.name || !newEquipment.category || !newEquipment.daily_rate) {
+  const handleAddEquipment = async () => {
+    if (!newEquipment.name || !newEquipment.category || !newEquipment.daily_rate || !newEquipment.location || !newEquipment.city) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    const equipment_item = {
-      id: String(equipment.length + 1),
-      ...newEquipment,
-      daily_rate: Number(newEquipment.daily_rate),
-      status: "available",
-      total_bookings: 0,
-      revenue: 0
-    };
+    try {
+      const { data, error } = await supabase
+        .from('equipment')
+        .insert([{
+          owner_id: profile?.id,
+          name: newEquipment.name,
+          type: newEquipment.type || newEquipment.category,
+          category: newEquipment.category,
+          daily_rate: Number(newEquipment.daily_rate),
+          location: newEquipment.location,
+          city: newEquipment.city,
+          description: newEquipment.description || null,
+          specifications: newEquipment.specifications,
+          status: 'available'
+        }])
+        .select();
 
-    setEquipment([...equipment, equipment_item]);
-    setNewEquipment({ name: "", category: "", daily_rate: "", location: "", description: "", image_url: "" });
-    setShowAddEquipment(false);
-    toast.success("Equipment added successfully!");
+      if (error) throw error;
+
+      toast.success("Equipment added successfully!");
+      setNewEquipment({ name: "", type: "", category: "", daily_rate: "", location: "", city: "", description: "", specifications: {} });
+      setShowAddEquipment(false);
+      fetchEquipment();
+    } catch (error: any) {
+      toast.error("Failed to add equipment: " + error.message);
+      console.error(error);
+    }
   };
 
-  const handleDeleteEquipment = (id: string) => {
-    setEquipment(equipment.filter(item => item.id !== id));
-    toast.success("Equipment deleted successfully!");
+  const handleDeleteEquipment = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('equipment')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success("Equipment deleted successfully!");
+      fetchEquipment();
+    } catch (error: any) {
+      toast.error("Failed to delete equipment");
+      console.error(error);
+    }
   };
 
-  const handleUpdateBookingStatus = (id: string, status: string) => {
-    setBookings(bookings.map(booking => 
-      booking.id === id ? { ...booking, status } : booking
-    ));
-    toast.success(`Booking status updated to ${status}`);
+  const handleUpdateBookingStatus = async (id: string, status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled') => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast.success(`Booking status updated to ${status}`);
+      fetchBookings();
+    } catch (error: any) {
+      toast.error("Failed to update booking status");
+      console.error(error);
+    }
   };
 
   const totalRevenue = revenueData.reduce((sum, month) => sum + month.revenue, 0);
@@ -291,7 +354,7 @@ export default function OperatorDashboard() {
                     <DialogTitle>Add New Equipment</DialogTitle>
                     <DialogDescription>Fill in the details to add new equipment to your fleet.</DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
                       <Label htmlFor="name">Equipment Name *</Label>
                       <Input
@@ -303,7 +366,7 @@ export default function OperatorDashboard() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="category">Category *</Label>
-                      <Select value={newEquipment.category} onValueChange={(value) => setNewEquipment({...newEquipment, category: value})}>
+                      <Select value={newEquipment.category} onValueChange={(value) => setNewEquipment({...newEquipment, category: value, type: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
@@ -327,11 +390,20 @@ export default function OperatorDashboard() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location">Address *</Label>
                       <Input
                         id="location"
                         value={newEquipment.location}
                         onChange={(e) => setNewEquipment({...newEquipment, location: e.target.value})}
+                        placeholder="Street address"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        value={newEquipment.city}
+                        onChange={(e) => setNewEquipment({...newEquipment, city: e.target.value})}
                         placeholder="Mumbai"
                       />
                     </div>
@@ -353,64 +425,84 @@ export default function OperatorDashboard() {
               </Dialog>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {equipment.map((item) => (
-                <Card key={item.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <CardDescription>{item.location}</CardDescription>
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading equipment...</p>
+              </div>
+            ) : equipment.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No equipment added yet. Click "Add Equipment" to get started!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {equipment.map((item) => (
+                  <Card key={item.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{item.name}</CardTitle>
+                          <CardDescription>{item.city}</CardDescription>
+                        </div>
+                        <Badge variant={item.status === 'available' ? 'secondary' : 'default'}>
+                          {item.status}
+                        </Badge>
                       </div>
-                      <Badge variant={item.status === 'available' ? 'secondary' : 'default'}>
-                        {item.status}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Daily Rate:</span>
-                        <span className="text-sm">₹{item.daily_rate}</span>
+                    </CardHeader>
+                    <CardContent>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{item.description}</p>
+                      )}
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Daily Rate:</span>
+                          <span className="text-sm">₹{item.daily_rate}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Category:</span>
+                          <span className="text-sm capitalize">{item.category}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium">Location:</span>
+                          <span className="text-sm">{item.location}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Total Bookings:</span>
-                        <span className="text-sm">{item.total_bookings}</span>
+                      <div className="flex gap-2 mt-4">
+                        <Button variant="outline" size="sm" className="flex-1">
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleDeleteEquipment(item.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm font-medium">Revenue:</span>
-                        <span className="text-sm">₹{item.revenue}</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDeleteEquipment(item.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6">
             <h2 className="text-2xl font-bold">Booking Management</h2>
-            <div className="space-y-4">
-              {bookings.map((booking) => (
-                <Card key={booking.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">{booking.equipment_name}</CardTitle>
-                        <CardDescription>Client: {booking.client_name}</CardDescription>
-                      </div>
+            {bookings.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No bookings yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {bookings.map((booking) => (
+                  <Card key={booking.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{booking.equipment?.name || 'Equipment'}</CardTitle>
+                          <CardDescription>Client: {booking.client_name}</CardDescription>
+                        </div>
                       <Badge variant={booking.status === 'active' ? 'default' : booking.status === 'completed' ? 'secondary' : 'outline'}>
                         {booking.status}
                       </Badge>
@@ -420,11 +512,11 @@ export default function OperatorDashboard() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div>
                         <span className="text-sm font-medium">Start Date:</span>
-                        <p className="text-sm text-muted-foreground">{booking.start_date}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(booking.start_time).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <span className="text-sm font-medium">End Date:</span>
-                        <p className="text-sm text-muted-foreground">{booking.end_date}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(booking.end_time).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <span className="text-sm font-medium">Total Amount:</span>
@@ -445,8 +537,9 @@ export default function OperatorDashboard() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="profile" className="space-y-6">
