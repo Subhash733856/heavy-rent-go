@@ -164,17 +164,104 @@ const BookingModal = (props: BookingModalProps) => {
         durationHours,
         clientName: formData.name,
         clientPhone: formData.phone,
-        pickupAddress: (equipment as Equipment).address || '',
+        pickupAddress: equipment.location || '',
         deliveryAddress: formData.location,
         specialRequirements: formData.requirements || undefined
       });
 
-      if (result.success) {
-        toast({
-          title: "Booking Submitted!",
-          description: "Your booking request has been submitted successfully. Our team will contact you shortly.",
-        });
-        setOpen(false);
+      if (result.success && result.booking) {
+        // Initiate payment flow
+        try {
+          const paymentResult = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-razorpay-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await import('@/integrations/supabase/client')).supabase.auth.getSession().then(s => s.data.session?.access_token)}`
+            },
+            body: JSON.stringify({
+              bookingId: result.booking.id,
+              amount: result.booking.advance_amount,
+              currency: 'INR'
+            })
+          });
+
+          if (!paymentResult.ok) {
+            throw new Error('Failed to create payment order');
+          }
+
+          const paymentData = await paymentResult.json();
+          
+          // Load Razorpay
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.async = true;
+          document.body.appendChild(script);
+
+          script.onload = () => {
+            const options = {
+              key: paymentData.razorpay_key_id,
+              amount: paymentData.order.amount,
+              currency: paymentData.order.currency,
+              name: 'Equipment Rental',
+              description: `Booking for ${equipment.name}`,
+              order_id: paymentData.order.id,
+              handler: async function(response: any) {
+                // Verify payment
+                try {
+                  const verifyResult = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-payment`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${(await import('@/integrations/supabase/client')).supabase.auth.getSession().then(s => s.data.session?.access_token)}`
+                    },
+                    body: JSON.stringify({
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_signature: response.razorpay_signature,
+                      booking_id: result.booking.id
+                    })
+                  });
+
+                  if (verifyResult.ok) {
+                    toast({
+                      title: "Payment Successful!",
+                      description: "Your booking is confirmed. You will receive a confirmation shortly.",
+                    });
+                    setOpen(false);
+                    // Reload page to show updated bookings
+                    setTimeout(() => window.location.reload(), 1500);
+                  } else {
+                    throw new Error('Payment verification failed');
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Payment Verification Failed",
+                    description: "Please contact support with your booking ID",
+                    variant: "destructive",
+                  });
+                }
+              },
+              prefill: {
+                name: formData.name,
+                contact: formData.phone,
+              },
+              theme: {
+                color: '#3399cc'
+              }
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.open();
+          };
+        } catch (paymentError) {
+          console.error('Payment initialization error:', paymentError);
+          toast({
+            title: "Booking Created",
+            description: "Booking created but payment failed to initialize. Please contact support.",
+            variant: "destructive",
+          });
+          setOpen(false);
+        }
       } else {
         throw new Error(result.error || "Failed to create booking");
       }

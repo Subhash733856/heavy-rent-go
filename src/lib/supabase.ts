@@ -28,23 +28,18 @@ export interface Equipment {
   category: string
   description?: string
   specifications?: any
-  features?: string[]
-  price_per_hour: number
-  price_per_day: number
-  location_lat: number
-  location_lng: number
-  city: string
-  state: string
-  address?: string
   images?: string[]
-  is_available: boolean
-  is_active: boolean
-  rating: number
-  total_reviews: number
-  operator_name?: string
-  operator_experience?: number
-  fuel_included: boolean
-  insurance_included: boolean
+  daily_rate: number
+  weekly_rate?: number
+  monthly_rate?: number
+  min_rental_period: number
+  location: string
+  city: string
+  latitude?: number
+  longitude?: number
+  available_from?: string
+  available_until?: string
+  status: 'available' | 'rented' | 'maintenance'
   created_at: string
   updated_at: string
   profiles?: Profile

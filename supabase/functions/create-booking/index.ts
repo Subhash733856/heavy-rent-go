@@ -76,7 +76,7 @@ serve(async (req) => {
     // Get equipment details
     const { data: equipment, error: equipmentError } = await supabase
       .from('equipment')
-      .select('*, owner_id, price_per_hour')
+      .select('*, owner_id, daily_rate')
       .eq('id', equipmentId)
       .single()
 
@@ -96,8 +96,8 @@ serve(async (req) => {
       throw new Error('Equipment is already booked for the selected time period')
     }
 
-    // Calculate pricing
-    const basePrice = equipment.price_per_hour * durationHours
+    // Calculate pricing (using daily rate)
+    const basePrice = equipment.daily_rate * Math.ceil(durationHours / 24)
     const gstAmount = basePrice * 0.18 // 18% GST
     const totalPrice = basePrice + gstAmount
     const advanceAmount = totalPrice * 0.30 // 30% advance
@@ -114,10 +114,10 @@ serve(async (req) => {
         duration_hours: durationHours,
         pickup_address: pickupAddress,
         delivery_address: deliveryAddress,
-        base_price: basePrice,
-        gst_amount: gstAmount,
-        total_price: totalPrice,
-        advance_amount: advanceAmount,
+        base_rate: basePrice,
+        transport_fee: 0,
+        operator_fee: 0,
+        total_amount: totalPrice,
         client_name: clientName,
         client_phone: clientPhone,
         special_requirements: specialRequirements,
@@ -144,7 +144,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        booking,
+        booking: {
+          ...booking,
+          advance_amount: advanceAmount
+        },
         message: 'Booking created successfully' 
       }),
       { 
