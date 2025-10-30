@@ -172,11 +172,20 @@ const BookingModal = (props: BookingModalProps) => {
       if (result.success && result.booking) {
         // Initiate payment flow
         try {
+          // Get the session token properly
+          const { supabase } = await import('@/integrations/supabase/client');
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token;
+
+          if (!token) {
+            throw new Error('No authentication token found');
+          }
+
           const paymentResult = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-razorpay-payment`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${(await import('@/integrations/supabase/client')).supabase.auth.getSession().then(s => s.data.session?.access_token)}`
+              'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
               bookingId: result.booking.id,
@@ -212,7 +221,7 @@ const BookingModal = (props: BookingModalProps) => {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${(await import('@/integrations/supabase/client')).supabase.auth.getSession().then(s => s.data.session?.access_token)}`
+                      'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
                       razorpay_order_id: response.razorpay_order_id,
