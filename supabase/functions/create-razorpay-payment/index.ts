@@ -53,6 +53,17 @@ serve(async (req) => {
     const { bookingId, amount, currency } = validationResult.data
 
     // Get booking details
+    // Get user's profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new Error('User profile not found')
+    }
+
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select('*, equipment(name), profiles!client_id(name, phone)')
@@ -63,7 +74,7 @@ serve(async (req) => {
       throw new Error('Booking not found')
     }
 
-    if (booking.client_id !== user.id) {
+    if (booking.client_id !== profile.id) {
       throw new Error('Unauthorized to pay for this booking')
     }
 
