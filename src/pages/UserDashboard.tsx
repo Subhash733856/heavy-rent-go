@@ -355,7 +355,7 @@ export default function UserDashboard() {
                   </div>
                   <div>
                     <span className="text-sm font-medium">Role:</span>
-                    <p className="text-sm text-muted-foreground capitalize">{profile?.role}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{isClient ? 'client' : 'operator'}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium">Member Since:</span>

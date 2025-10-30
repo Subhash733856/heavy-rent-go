@@ -7,12 +7,15 @@ interface Profile {
   user_id: string
   name: string
   email?: string
-  role: 'client' | 'operator'
   rating?: number
   total_reviews?: number
   bio?: string
   created_at: string
   updated_at: string
+}
+
+interface UserRole {
+  role: 'client' | 'operator' | 'admin' | 'moderator' | 'user'
 }
 
 interface AuthContextType {
@@ -31,6 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [userRole, setUserRole] = useState<'client' | 'operator' | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -75,6 +79,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Type cast the entire profile data
         const typedProfile: Profile = profileData as any as Profile
         setProfile(typedProfile)
+      }
+
+      // Fetch user role from user_roles table
+      // @ts-ignore - Supabase types will be regenerated after migration
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle()
+      
+      if (roleData) {
+        setUserRole(roleData.role as 'client' | 'operator')
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -133,8 +149,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signIn,
     signOut,
-    isOperator: profile?.role === 'operator',
-    isClient: profile?.role === 'client'
+    isOperator: userRole === 'operator',
+    isClient: userRole === 'client'
   }
 
   return (

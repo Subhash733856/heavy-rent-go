@@ -337,7 +337,6 @@ export type Database = {
           name: string
           phone: string | null
           rating: number | null
-          role: string
           total_reviews: number | null
           updated_at: string
           user_id: string
@@ -351,7 +350,6 @@ export type Database = {
           name: string
           phone?: string | null
           rating?: number | null
-          role?: string
           total_reviews?: number | null
           updated_at?: string
           user_id: string
@@ -365,7 +363,6 @@ export type Database = {
           name?: string
           phone?: string | null
           rating?: number | null
-          role?: string
           total_reviews?: number | null
           updated_at?: string
           user_id?: string

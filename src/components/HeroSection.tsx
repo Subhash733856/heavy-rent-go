@@ -16,12 +16,12 @@ import {
 
 export const HeroSection = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, isOperator, isClient } = useAuth();
 
   const handleGetStarted = () => {
     if (!user) {
       navigate('/client-login');
-    } else if (profile?.role === 'operator') {
+    } else if (isOperator) {
       navigate('/operator-home');
     } else {
       navigate('/user-dashboard');
@@ -31,7 +31,7 @@ export const HeroSection = () => {
   const handleListEquipment = () => {
     if (!user) {
       navigate('/operator-login');
-    } else if (profile?.role === 'operator') {
+    } else if (isOperator) {
       navigate('/operator-home');
     } else {
       alert('Please sign up as an operator to list equipment.');

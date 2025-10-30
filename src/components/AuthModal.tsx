@@ -16,7 +16,7 @@ interface AuthModalProps {
 
 const AuthModal = ({ trigger }: AuthModalProps) => {
   const { toast } = useToast();
-  const { signIn, signUp, signOut, user, profile, loading } = useAuth();
+  const { signIn, signUp, signOut, user, profile, loading, isOperator, isClient } = useAuth();
   const [open, setOpen] = useState(false);
   
   const [signInData, setSignInData] = useState({
@@ -109,7 +109,7 @@ const AuthModal = ({ trigger }: AuthModalProps) => {
               </div>
               <CardTitle>Welcome, {profile.name}!</CardTitle>
               <p className="text-sm text-muted-foreground capitalize">
-                {profile.role} Account
+                {isOperator ? 'Operator' : 'Client'} Account
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -119,7 +119,7 @@ const AuthModal = ({ trigger }: AuthModalProps) => {
               </div>
               <div className="space-y-2">
                 <Label>Role</Label>
-                <Input value={profile.role} disabled className="capitalize" />
+                <Input value={isOperator ? 'operator' : 'client'} disabled className="capitalize" />
               </div>
               <div className="space-y-2">
                 <Label>Rating</Label>

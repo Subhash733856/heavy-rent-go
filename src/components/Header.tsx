@@ -33,7 +33,7 @@ const handleSearch = () => {
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isOperator, isClient } = useAuth();
   const navigate = useNavigate();
 
   const handleLoginClick = () => {
@@ -41,7 +41,7 @@ export const Header = () => {
   };
 
   const handleDashboardClick = () => {
-    if (profile?.role === 'operator') {
+    if (isOperator) {
       navigate("/operator-home");
     } else {
       navigate("/user-dashboard");
@@ -140,7 +140,7 @@ export const Header = () => {
                         <div className="text-xs">{profile?.email}</div>
                         <div className="text-xs mt-1">
                           <Badge variant="secondary" className="text-xs">
-                            {profile?.role === 'operator' ? 'Operator' : 'Client'}
+                            {isOperator ? 'Operator' : 'Client'}
                           </Badge>
                         </div>
                       </div>
@@ -231,7 +231,7 @@ export const Header = () => {
                       <div className="font-medium text-sm">{profile?.name}</div>
                       <div className="text-xs text-muted-foreground">{profile?.email}</div>
                       <Badge variant="secondary" className="text-xs mt-2">
-                        {profile?.role === 'operator' ? 'Operator' : 'Client'}
+                        {isOperator ? 'Operator' : 'Client'}
                       </Badge>
                     </div>
                     <Button 

@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requireRole }: ProtectedRouteProps) => {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isOperator, isClient } = useAuth();
 
   if (loading) {
     return (
@@ -27,20 +27,23 @@ export const ProtectedRoute = ({ children, requireRole }: ProtectedRouteProps) =
     return <Navigate to="/client-login" replace />;
   }
 
-  if (requireRole && profile?.role !== requireRole) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to access this page. 
-              {profile?.role === 'client' ? ' This page is for operators only.' : ' This page is for clients only.'}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+  if (requireRole) {
+    const hasRequiredRole = requireRole === 'operator' ? isOperator : isClient;
+    if (!hasRequiredRole) {
+      return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Access Denied</CardTitle>
+              <CardDescription>
+                You don't have permission to access this page. 
+                {requireRole === 'operator' ? ' This page is for operators only.' : ' This page is for clients only.'}
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      );
+    }
   }
 
   return <>{children}</>;

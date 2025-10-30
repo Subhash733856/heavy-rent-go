@@ -6,7 +6,6 @@ export { supabase }
 // Types
 export interface Profile {
   id: string
-  role: 'client' | 'operator'
   name: string
   phone?: string
   location_lat?: number
@@ -290,7 +289,6 @@ export const authAPI = {
       return {
         id,
         name: 'User Name',
-        role: 'client' as const,
         rating: 0,
         total_reviews: 0,
         created_at: new Date().toISOString(),

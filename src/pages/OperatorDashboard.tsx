@@ -560,7 +560,7 @@ export default function OperatorDashboard() {
                   </div>
                   <div>
                     <Label>Role</Label>
-                    <p className="text-sm text-muted-foreground capitalize">{profile?.role}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{isOperator ? 'operator' : 'client'}</p>
                   </div>
                   <div>
                     <Label>Rating</Label>
