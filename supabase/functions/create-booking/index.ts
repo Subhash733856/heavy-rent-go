@@ -42,6 +42,17 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
+    // Get the user's profile ID (not auth.users.id)
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (profileError || !profile) {
+      throw new Error('User profile not found')
+    }
+
     const rawData = await req.json()
     
     // Validate input
@@ -107,7 +118,7 @@ serve(async (req) => {
       .from('bookings')
       .insert({
         equipment_id: equipmentId,
-        client_id: user.id,
+        client_id: profile.id,
         operator_id: equipment.owner_id,
         start_time: startTime,
         end_time: endTime,
