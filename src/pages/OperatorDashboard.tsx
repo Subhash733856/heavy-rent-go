@@ -74,6 +74,8 @@ export default function OperatorDashboard() {
     description: "",
     specifications: {}
   });
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
 
   useEffect(() => {
     if (user && isOperator && profile?.id) {
@@ -135,6 +137,49 @@ export default function OperatorDashboard() {
     );
   }
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files).slice(0, 5); // Max 5 images
+      setSelectedImages(files);
+    }
+  };
+
+  const uploadImages = async (): Promise<string[]> => {
+    if (!user || selectedImages.length === 0) return [];
+    
+    setUploadingImages(true);
+    const imageUrls: string[] = [];
+
+    try {
+      for (const file of selectedImages) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random()}.${fileExt}`;
+        
+        const { error: uploadError, data } = await supabase.storage
+          .from('equipment-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('equipment-images')
+          .getPublicUrl(fileName);
+        
+        imageUrls.push(publicUrl);
+      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      throw error;
+    } finally {
+      setUploadingImages(false);
+    }
+
+    return imageUrls;
+  };
+
   const handleAddEquipment = async () => {
     if (!newEquipment.name || !newEquipment.category || !newEquipment.daily_rate || !newEquipment.location || !newEquipment.city) {
       toast.error("Please fill in all required fields");
@@ -142,6 +187,13 @@ export default function OperatorDashboard() {
     }
 
     try {
+      let imageUrls: string[] = [];
+      
+      if (selectedImages.length > 0) {
+        toast.loading("Uploading images...");
+        imageUrls = await uploadImages();
+      }
+
       const { data, error } = await supabase
         .from('equipment')
         .insert([{
@@ -154,7 +206,8 @@ export default function OperatorDashboard() {
           city: newEquipment.city,
           description: newEquipment.description || null,
           specifications: newEquipment.specifications,
-          status: 'available'
+          status: 'available',
+          images: imageUrls.length > 0 ? imageUrls : null
         }])
         .select();
 
@@ -162,6 +215,7 @@ export default function OperatorDashboard() {
 
       toast.success("Equipment added successfully!");
       setNewEquipment({ name: "", type: "", category: "", daily_rate: "", location: "", city: "", description: "", specifications: {} });
+      setSelectedImages([]);
       setShowAddEquipment(false);
       fetchEquipment();
     } catch (error: any) {
@@ -416,10 +470,28 @@ export default function OperatorDashboard() {
                         placeholder="Equipment details and specifications"
                       />
                     </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="images">Equipment Images (Max 5)</Label>
+                      <Input
+                        id="images"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        multiple
+                        onChange={handleImageSelect}
+                        disabled={uploadingImages}
+                      />
+                      {selectedImages.length > 0 && (
+                        <p className="text-sm text-muted-foreground">
+                          {selectedImages.length} image(s) selected
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button variant="outline" onClick={() => setShowAddEquipment(false)}>Cancel</Button>
-                    <Button onClick={handleAddEquipment}>Add Equipment</Button>
+                    <Button onClick={handleAddEquipment} disabled={uploadingImages}>
+                      {uploadingImages ? "Uploading..." : "Add Equipment"}
+                    </Button>
                   </div>
                 </DialogContent>
               </Dialog>
