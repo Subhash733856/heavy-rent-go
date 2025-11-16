@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { Calendar, DollarSign, Clock, MapPin, Phone, Mail, Star } from "lucide-react";
+import { ReviewForm } from "@/components/ReviewForm";
 
 // Mock data for demonstration
 const mockBookings = [
@@ -78,6 +80,8 @@ const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accen
 export default function UserDashboard() {
   const { user, profile, isClient } = useAuth();
   const [bookings, setBookings] = useState(mockBookings);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<typeof mockBookings[0] | null>(null);
 
   if (!user || !isClient) {
     return (
@@ -99,6 +103,17 @@ export default function UserDashboard() {
       booking.id === id ? { ...booking, status: 'cancelled' } : booking
     ));
     toast.success("Booking cancelled successfully!");
+  };
+
+  const handleOpenReviewDialog = (booking: typeof mockBookings[0]) => {
+    setSelectedBooking(booking);
+    setReviewDialogOpen(true);
+  };
+
+  const handleReviewSuccess = () => {
+    setReviewDialogOpen(false);
+    setSelectedBooking(null);
+    toast.success("Thank you for your review!");
   };
 
   const totalSpent = spendingData.reduce((sum, month) => sum + month.amount, 0);
@@ -240,7 +255,11 @@ export default function UserDashboard() {
                             Contact Operator
                           </Button>
                           {booking.status === 'completed' && (
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleOpenReviewDialog(booking)}
+                            >
                               <Star className="h-4 w-4 mr-1" />
                               Rate
                             </Button>
@@ -391,6 +410,29 @@ export default function UserDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Review Dialog */}
+        <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rate Your Experience</DialogTitle>
+            </DialogHeader>
+            {selectedBooking && (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <h4 className="font-semibold">{selectedBooking.equipment.name}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedBooking.equipment.operator_name}</p>
+                </div>
+                <ReviewForm
+                  bookingId={selectedBooking.id}
+                  equipmentId="temp-equipment-id"
+                  operatorId="temp-operator-id"
+                  onSuccess={handleReviewSuccess}
+                />
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

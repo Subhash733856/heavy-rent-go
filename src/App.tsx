@@ -12,6 +12,8 @@ import UserDashboard from "./pages/UserDashboard";
 import ClientLogin from "./pages/ClientLogin";
 import OperatorLogin from "./pages/OperatorLogin";
 import OperatorHome from "./pages/OperatorHome";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +52,8 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
