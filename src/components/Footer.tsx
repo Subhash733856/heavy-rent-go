@@ -36,6 +36,14 @@ export const Footer = () => {
           </div>
           
           <div>
+            <h4 className="font-semibold mb-4">Legal</h4>
+            <div className="space-y-2 text-sm opacity-80">
+              <a href="/privacy-policy" className="block hover:text-primary transition-colors">Privacy Policy</a>
+              <a href="/terms-of-service" className="block hover:text-primary transition-colors">Terms of Service</a>
+            </div>
+          </div>
+          
+          <div>
             <h4 className="font-semibold mb-4">Contact</h4>
             <div className="space-y-2 text-sm opacity-80">
               <div>+91 7259388545</div>
