@@ -66,35 +66,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('Loading profile for user:', userId);
+      
       // @ts-ignore - Supabase types will be regenerated after migration
-      const { data: profileData, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle()
       
-      if (error) throw error
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
       
       if (profileData) {
-        // Type cast the entire profile data
+        console.log('Profile loaded:', profileData);
         const typedProfile: Profile = profileData as any as Profile
         setProfile(typedProfile)
+      } else {
+        console.log('No profile found for user');
       }
 
       // Fetch user role from user_roles table
       // @ts-ignore - Supabase types will be regenerated after migration
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle()
       
+      if (roleError) {
+        console.error('Role error:', roleError);
+      }
+      
       if (roleData) {
+        console.log('User role:', roleData.role);
         setUserRole(roleData.role as 'client' | 'operator')
+      } else {
+        console.log('No role found, checking user metadata');
+        // Fallback to user metadata if no role in user_roles table
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        const metadataRole = currentUser?.user_metadata?.role
+        if (metadataRole) {
+          console.log('Using metadata role:', metadataRole);
+          setUserRole(metadataRole as 'client' | 'operator')
+        }
       }
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
+      console.log('Setting loading to false');
       setLoading(false)
     }
   }
