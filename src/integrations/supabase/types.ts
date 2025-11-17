@@ -493,6 +493,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_admin_role: { Args: { _user_id: string }; Returns: undefined }
       check_booking_overlap: {
         Args: {
           p_end_time: string
