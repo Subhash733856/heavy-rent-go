@@ -66,8 +66,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = async (userId: string) => {
     try {
-      console.log('Loading profile for user:', userId);
-      
       // @ts-ignore - Supabase types will be regenerated after migration
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
@@ -77,15 +75,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (profileError) {
         console.error('Profile error:', profileError);
-        throw profileError;
       }
       
       if (profileData) {
-        console.log('Profile loaded:', profileData);
         const typedProfile: Profile = profileData as any as Profile
         setProfile(typedProfile)
-      } else {
-        console.log('No profile found for user');
       }
 
       // Fetch user role from user_roles table
@@ -101,22 +95,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       if (roleData) {
-        console.log('User role:', roleData.role);
         setUserRole(roleData.role as 'client' | 'operator')
       } else {
-        console.log('No role found, checking user metadata');
         // Fallback to user metadata if no role in user_roles table
         const { data: { user: currentUser } } = await supabase.auth.getUser()
         const metadataRole = currentUser?.user_metadata?.role
         if (metadataRole) {
-          console.log('Using metadata role:', metadataRole);
           setUserRole(metadataRole as 'client' | 'operator')
         }
       }
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
-      console.log('Setting loading to false');
       setLoading(false)
     }
   }
