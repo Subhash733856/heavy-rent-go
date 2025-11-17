@@ -22,10 +22,24 @@ const ClientLogin = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
-    if (user) {
+    if (user && !loading) {
       navigate("/");
     }
-  }, [user, navigate]);
+  }, [user, loading, navigate]);
+
+  // Show loading state while verifying authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Loading...</CardTitle>
+            <CardDescription>Please wait while we verify your credentials.</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
