@@ -79,7 +79,7 @@ serve(async (req) => {
     }
 
     // Create Razorpay order
-    const razorpayKeyId = 'rzp_test_Ff7Gh4K3JBYwOK'
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID') || 'rzp_test_Ff7Gh4K3JBYwOK'
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
 
     if (!razorpayKeySecret) {
