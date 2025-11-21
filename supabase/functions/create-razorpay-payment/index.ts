@@ -79,11 +79,15 @@ serve(async (req) => {
     }
 
     // Create Razorpay order
-    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID') || 'rzp_test_Ff7Gh4K3JBYwOK'
+    const razorpayKeyId = Deno.env.get('RAZORPAY_KEY_ID')
     const razorpayKeySecret = Deno.env.get('RAZORPAY_KEY_SECRET')
 
-    if (!razorpayKeySecret) {
-      throw new Error('Razorpay configuration missing')
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      console.error('Missing Razorpay credentials:', { 
+        hasKeyId: !!razorpayKeyId, 
+        hasKeySecret: !!razorpayKeySecret 
+      })
+      throw new Error('Razorpay credentials not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Cloud secrets.')
     }
 
     const orderPayload = {
