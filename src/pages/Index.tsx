@@ -10,12 +10,15 @@ import { HowItWorks } from "@/components/HowItWorks";
 import { OperatorSection } from "@/components/OperatorSection";
 import OperatorRevenueSection from "@/components/OperatorRevenueSection";
 import { Footer } from "@/components/Footer";
+import { ThreeBackground } from "@/components/ThreeBackground";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <HeroSection />
+    <div className="min-h-screen bg-background relative">
+      <ThreeBackground />
+      <div className="relative z-10">
+        <Header />
+        <HeroSection />
       <EquipmentCategories />
       <div id="equipment-listing">
         <EquipmentListing />
@@ -29,9 +32,10 @@ const Index = () => {
         <CustomQuoteSection />
       </div>
       <HowItWorks />
-      <OperatorSection />
-      <OperatorRevenueSection />
-      <Footer />
+        <OperatorSection />
+        <OperatorRevenueSection />
+        <Footer />
+      </div>
     </div>
   );
 };
