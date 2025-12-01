@@ -93,7 +93,7 @@ serve(async (req) => {
     const orderPayload = {
       amount: Math.round(amount * 100), // Convert to paise
       currency: currency,
-      receipt: `booking_${bookingId}`,
+      receipt: bookingId, // Razorpay requires max 40 chars
       notes: {
         booking_id: bookingId,
         equipment_name: booking.equipment.name,
