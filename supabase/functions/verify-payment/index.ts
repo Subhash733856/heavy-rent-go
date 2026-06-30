@@ -15,13 +15,6 @@ const paymentVerificationSchema = z.object({
   booking_id: z.string().uuid('Invalid booking ID')
 })
 
-const paymentVerificationSchema = z.object({
-  razorpay_order_id: z.string().min(1, 'Order ID required'),
-  razorpay_payment_id: z.string().min(1, 'Payment ID required'),
-  razorpay_signature: z.string().min(1, 'Signature required'),
-  booking_id: z.string().uuid('Invalid booking ID')
-})
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
