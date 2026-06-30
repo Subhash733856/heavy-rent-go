@@ -17,20 +17,26 @@ export type Database = {
       bookings: {
         Row: {
           base_rate: number
+          cancellation_reason: string | null
+          cancelled_at: string | null
           client_email: string | null
           client_id: string
           client_name: string
           client_phone: string
+          coupon_id: string | null
           created_at: string
           delivery_address: string
+          discount_amount: number | null
           duration_hours: number
           end_time: string
           equipment_id: string
+          gst_amount: number | null
           id: string
           notes: string | null
           operator_fee: number | null
           operator_id: string
           pickup_address: string
+          rescheduled_from: string | null
           special_requirements: string | null
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
@@ -40,20 +46,26 @@ export type Database = {
         }
         Insert: {
           base_rate: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           client_email?: string | null
           client_id: string
           client_name: string
           client_phone: string
+          coupon_id?: string | null
           created_at?: string
           delivery_address: string
+          discount_amount?: number | null
           duration_hours: number
           end_time: string
           equipment_id: string
+          gst_amount?: number | null
           id?: string
           notes?: string | null
           operator_fee?: number | null
           operator_id: string
           pickup_address: string
+          rescheduled_from?: string | null
           special_requirements?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -63,20 +75,26 @@ export type Database = {
         }
         Update: {
           base_rate?: number
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           client_email?: string | null
           client_id?: string
           client_name?: string
           client_phone?: string
+          coupon_id?: string | null
           created_at?: string
           delivery_address?: string
+          discount_amount?: number | null
           duration_hours?: number
           end_time?: string
           equipment_id?: string
+          gst_amount?: number | null
           id?: string
           notes?: string | null
           operator_fee?: number | null
           operator_id?: string
           pickup_address?: string
+          rescheduled_from?: string | null
           special_requirements?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
@@ -93,6 +111,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_equipment_id_fkey"
             columns: ["equipment_id"]
             isOneToOne: false
@@ -106,7 +131,139 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "bookings_rescheduled_from_fkey"
+            columns: ["rescheduled_from"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      chat_rooms: {
+        Row: {
+          booking_id: string | null
+          client_id: string
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          operator_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          client_id: string
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          operator_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          client_id?: string
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          operator_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupon_redemptions: {
+        Row: {
+          booking_id: string | null
+          coupon_id: string
+          created_at: string
+          discount_amount: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          coupon_id: string
+          created_at?: string
+          discount_amount: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          coupon_id?: string
+          created_at?: string
+          discount_amount?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          description: string | null
+          discount_percent: number
+          id: string
+          max_discount: number | null
+          min_order_amount: number | null
+          usage_limit: number | null
+          used_count: number
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          discount_percent: number
+          id?: string
+          max_discount?: number | null
+          min_order_amount?: number | null
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          discount_percent?: number
+          id?: string
+          max_discount?: number | null
+          min_order_amount?: number | null
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       custom_quotes: {
         Row: {
@@ -244,6 +401,149 @@ export type Database = {
           },
         ]
       }
+      equipment_locations: {
+        Row: {
+          booking_id: string
+          equipment_id: string
+          heading: number | null
+          id: string
+          latitude: number
+          longitude: number
+          recorded_at: string
+          speed: number | null
+        }
+        Insert: {
+          booking_id: string
+          equipment_id: string
+          heading?: number | null
+          id?: string
+          latitude: number
+          longitude: number
+          recorded_at?: string
+          speed?: number | null
+        }
+        Update: {
+          booking_id?: string
+          equipment_id?: string
+          heading?: number | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          recorded_at?: string
+          speed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipment_locations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipment_locations_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          booking_id: string
+          created_at: string
+          discount_amount: number
+          gst_amount: number
+          gst_number: string | null
+          id: string
+          invoice_number: string
+          payment_id: string | null
+          pdf_url: string | null
+          subtotal: number
+          total: number
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          discount_amount?: number
+          gst_amount: number
+          gst_number?: string | null
+          id?: string
+          invoice_number: string
+          payment_id?: string | null
+          pdf_url?: string | null
+          subtotal: number
+          total: number
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          discount_amount?: number
+          gst_amount?: number
+          gst_number?: string | null
+          id?: string
+          invoice_number?: string
+          payment_id?: string | null
+          pdf_url?: string | null
+          subtotal?: number
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          read_at: string | null
+          room_id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          read_at?: string | null
+          room_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          read_at?: string | null
+          room_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -276,6 +576,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      operator_documents: {
+        Row: {
+          created_at: string
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          equipment_id: string | null
+          expires_at: string | null
+          file_path: string
+          id: string
+          operator_id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["doc_status"]
+        }
+        Insert: {
+          created_at?: string
+          doc_type: Database["public"]["Enums"]["doc_type"]
+          equipment_id?: string | null
+          expires_at?: string | null
+          file_path: string
+          id?: string
+          operator_id: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["doc_status"]
+        }
+        Update: {
+          created_at?: string
+          doc_type?: Database["public"]["Enums"]["doc_type"]
+          equipment_id?: string | null
+          expires_at?: string | null
+          file_path?: string
+          id?: string
+          operator_id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["doc_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_documents_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -329,45 +679,102 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           bio: string | null
           created_at: string
           email: string | null
           id: string
           location: string | null
           name: string
+          online_at: string | null
           phone: string | null
+          phone_verified: boolean | null
           rating: number | null
           total_reviews: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           bio?: string | null
           created_at?: string
           email?: string | null
           id?: string
           location?: string | null
           name: string
+          online_at?: string | null
           phone?: string | null
+          phone_verified?: boolean | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           bio?: string | null
           created_at?: string
           email?: string | null
           id?: string
           location?: string | null
           name?: string
+          online_at?: string | null
           phone?: string | null
+          phone_verified?: boolean | null
           rating?: number | null
           total_reviews?: number | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      refunds: {
+        Row: {
+          amount: number
+          booking_id: string | null
+          created_at: string
+          id: string
+          payment_id: string
+          razorpay_refund_id: string | null
+          reason: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          payment_id: string
+          razorpay_refund_id?: string | null
+          reason?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          payment_id?: string
+          razorpay_refund_id?: string | null
+          reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -467,6 +874,79 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          booking_id: string | null
+          created_at: string
+          id: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+          ticket_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          ticket_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -487,6 +967,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string | null
+          reference_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reference_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reference_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          currency: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          currency?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          currency?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wishlists: {
+        Row: {
+          created_at: string
+          equipment_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          equipment_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          equipment_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -522,6 +1082,15 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
+      doc_status: "pending" | "approved" | "rejected"
+      doc_type:
+        | "rc"
+        | "insurance"
+        | "puc"
+        | "fitness"
+        | "license"
+        | "aadhaar"
+        | "pan"
       equipment_status: "available" | "rented" | "maintenance" | "unavailable"
       notification_type:
         | "booking_request"
@@ -667,6 +1236,16 @@ export const Constants = {
         "in_progress",
         "completed",
         "cancelled",
+      ],
+      doc_status: ["pending", "approved", "rejected"],
+      doc_type: [
+        "rc",
+        "insurance",
+        "puc",
+        "fitness",
+        "license",
+        "aadhaar",
+        "pan",
       ],
       equipment_status: ["available", "rented", "maintenance", "unavailable"],
       notification_type: [
